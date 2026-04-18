@@ -9,7 +9,8 @@ from .permissions import IsAdmin
 
 # Login
 class CustomTokenObtainPairView(TokenObtainPairView):
-    """POST /api/auth/login/ - Devuelve access y refresh tokens"""
+    
+    # POST /api/auth/login/
     pass
 
 # Registro de clientes o empleados

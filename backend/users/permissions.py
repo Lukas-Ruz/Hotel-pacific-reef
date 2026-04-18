@@ -13,7 +13,8 @@ class IsBookingAdmin(permissions.BasePermission):
         return request.user.is_authenticated and request.user.role in ['booking_admin', 'admin']
 
 class IsOwnerOrAdmin(permissions.BasePermission):
-    """Para que usuarios solo vean sus propios datos, admins ven todos"""
+    
+    # Para que usuarios solo vean sus propios datos, admins ven todos
     def has_object_permission(self, request, view, obj):
         if request.user.role == 'admin':
             return True
