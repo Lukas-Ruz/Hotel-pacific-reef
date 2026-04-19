@@ -18,7 +18,6 @@ const Layout = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex justify-between h-16 items-center">
             <Link to="/" className="flex items-center gap-2">
-              <span className="text-2xl">🌊</span>
               <span className="font-bold text-ocean-900 text-xl">Pacific Reef</span>
             </Link>
 

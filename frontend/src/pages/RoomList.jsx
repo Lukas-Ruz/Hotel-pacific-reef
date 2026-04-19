@@ -1,46 +1,65 @@
-import { Link } from 'react-router-dom';
-import { UserGroupIcon, BanknotesIcon } from '@heroicons/react/24/outline';
+import { useState, useEffect } from 'react';
+import api from '../api/axios';
+import RoomCard from '../components/RoomCard';
 
-const RoomCard = ({ room }) => {
+const RoomList = () => {
+  const [rooms, setRooms] = useState([]);
+  const [category, setCategory] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [category]);
+
+  const fetchRooms = async () => {
+    try {
+      const params = category ? { category } : {};
+      const response = await api.get('/rooms/', { params });
+      setRooms(response.data);
+    } catch (error) {
+      console.error('Error cargando habitaciones:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-      <div className="relative h-48">
-        <img 
-          src={room.images[0]} 
-          alt={room.name}
-          className="w-full h-full object-cover"
-        />
-        <span className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-bold ${
-          room.category === 'premium' ? 'bg-coral-500 text-white' : 'bg-ocean-500 text-white'
-        }`}>
-          {room.category === 'premium' ? 'Premium' : 'Turista'}
-        </span>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-ocean-900 mb-6">Nuestras Habitaciones</h1>
       
-      <div className="p-4">
-        <h3 className="text-lg font-bold text-gray-800 mb-1">{room.name}</h3>
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">{room.description}</p>
-        
-        <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-          <span className="flex items-center gap-1">
-            <UserGroupIcon className="w-4 h-4" />
-            {room.capacity} pers.
-          </span>
-          <span className="flex items-center gap-1">
-            <BanknotesIcon className="w-4 h-4" />
-            ${room.price_daily}/noche
-          </span>
-        </div>
-        
-        <Link 
-          to={`/rooms/${room.id}`}
-          className="block text-center btn-primary"
+      {/* Filtros */}
+      <div className="flex gap-4 mb-8">
+        <button 
+          onClick={() => setCategory('')}
+          className={`px-4 py-2 rounded-lg ${!category ? 'bg-ocean-600 text-white' : 'bg-gray-200'}`}
         >
-          Ver Detalle
-        </Link>
+          Todas
+        </button>
+        <button 
+          onClick={() => setCategory('tourist')}
+          className={`px-4 py-2 rounded-lg ${category === 'tourist' ? 'bg-ocean-600 text-white' : 'bg-gray-200'}`}
+        >
+          Turista
+        </button>
+        <button 
+          onClick={() => setCategory('premium')}
+          className={`px-4 py-2 rounded-lg ${category === 'premium' ? 'bg-coral-500 text-white' : 'bg-gray-200'}`}
+        >
+          Premium
+        </button>
       </div>
+
+      {loading ? (
+        <div className="text-center py-12">Cargando...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {rooms.map(room => (
+            <RoomCard key={room.id} room={room} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
 
-export default RoomCard;
+export default RoomList;

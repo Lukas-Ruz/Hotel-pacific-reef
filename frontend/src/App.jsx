@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useState, useEffect } from 'react';
 import './i18n';
 
 // Layouts
@@ -11,8 +12,8 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import RoomList from './pages/RoomList';
 import RoomDetail from './pages/RoomDetail';
-import BookingConfirm from './pages/BookingConfirm';
-import BookingSuccess from './pages/BookingSuccess';
+import BookingConfirm from './pages/BookConfirm';
+import BookingSuccess from './pages/BookSuccess';
 import AdminDashboard from './pages/AdminDashboard';
 import EmployeeDashboard from './pages/EmployeeDashboard';
 
