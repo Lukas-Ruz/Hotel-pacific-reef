@@ -12,6 +12,7 @@ def api_client():
 @pytest.fixture
 def admin_user(db):
     return User.objects.create_superuser(
+        username='admintest',
         email='admin@test.com',
         password='admin123',
         first_name='Admin',
@@ -22,6 +23,7 @@ def admin_user(db):
 @pytest.fixture
 def client_user(db):
     return User.objects.create_user(
+        username='clienttest',
         email='client@test.com',
         password='client123',
         first_name='Juan',
@@ -33,6 +35,7 @@ def client_user(db):
 @pytest.fixture
 def employee_user(db):
     return User.objects.create_user(
+        username='employeetest',
         email='employee@test.com',
         password='emp123',
         first_name='Pedro',

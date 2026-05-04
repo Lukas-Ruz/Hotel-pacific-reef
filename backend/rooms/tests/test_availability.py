@@ -19,6 +19,16 @@ class TestRoomAvailability:
     def test_check_availability_no_conflicts(self, api_client, sample_room):
         check_in = (date.today() + timedelta(days=10)).isoformat()
         check_out = (date.today() + timedelta(days=12)).isoformat()
+        response = api_client.get(
+            f'/api/rooms/availability/?check_in={check_in}&check_out={check_out}'
+        )
+        
+        # Debug: imprime el error si falla
+        if response.status_code != 200:
+            print(f"ERROR: {response.data}")
+            
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data['available_count'] >= 1
         
         response = api_client.get(f'/api/rooms/availability/?check_in={check_in}&check_out={check_out}')
         assert response.status_code == status.HTTP_200_OK
@@ -30,7 +40,6 @@ class TestRoomAvailability:
         check_out = sample_reservation.check_out.isoformat()
         
         response = api_client.get(f'/api/rooms/availability/?check_in={check_in}&check_out={check_out}')
-        # La habitación sample_room no debe aparecer
         room_ids = [r['id'] for r in response.data['rooms']]
         assert sample_room.id not in room_ids
 

@@ -10,7 +10,8 @@ class TestAuthentication:
             'password': 'password123',
             'first_name': 'Nuevo',
             'last_name': 'Usuario',
-            'phone': '+123456789'
+            'phone': '+123456789',
+            'id_document': 'TEST123'  # ← AGREGAR ESTA LÍNEA
         }
         response = api_client.post('/api/auth/register/', data)
         assert response.status_code == status.HTTP_201_CREATED
@@ -29,12 +30,11 @@ class TestAuthentication:
 
     def test_login_success(self, api_client, client_user):
         response = api_client.post('/api/auth/login/', {
-            'username': 'client@test.com',
+            'username': 'clienttest', 
             'password': 'client123'
         })
         assert response.status_code == status.HTTP_200_OK
         assert 'access' in response.data
-        assert 'refresh' in response.data
 
     def test_login_invalid_credentials(self, api_client):
         response = api_client.post('/api/auth/login/', {

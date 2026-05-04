@@ -12,6 +12,7 @@ from .models import Reservation
 from rooms.models import Room
 from .serializers import ReservationCreateSerializer, ReservationDetailSerializer
 from users.permissions import IsAdmin, IsEmployee
+from decimal import Decimal
 
 def generate_qr_code(reservation_id):
     
@@ -38,6 +39,7 @@ class ReservationCreateView(generics.CreateAPIView):
     @transaction.atomic
     def perform_create(self, serializer):
         # Datos validados
+        advance = total * Decimal('0.30')
         room_id = serializer.validated_data['room_id']
         check_in = serializer.validated_data['check_in']
         check_out = serializer.validated_data['check_out']
