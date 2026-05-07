@@ -47,8 +47,10 @@ class TestReservations:
 
     def test_validate_qr_employee(self, api_client, employee_user, sample_reservation):
         api_client.force_authenticate(user=employee_user)
-        response = api_client.get(
-            f'/api/reservations/validate-qr/?qr_code={sample_reservation.qr_code}'
+        response = api_client.post(
+            '/api/reservations/validate-qr/',
+            data={'qr_code': sample_reservation.qr_code},
+            format='json'
         )
         
         assert response.status_code == status.HTTP_200_OK
@@ -56,5 +58,11 @@ class TestReservations:
 
     def test_validate_qr_invalid(self, api_client, employee_user):
         api_client.force_authenticate(user=employee_user)
-        response = api_client.get('/api/reservations/validate-qr/?qr_code=FAKE-CODE')
+        
+        response = api_client.post(
+            '/api/reservations/validate-qr/',
+            data={'qr_code': 'FAKE-CODE'},
+            format='json'
+        )
+        
         assert response.status_code == status.HTTP_404_NOT_FOUND

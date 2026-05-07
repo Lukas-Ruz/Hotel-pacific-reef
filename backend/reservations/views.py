@@ -2,6 +2,7 @@ import uuid
 import qrcode
 import io
 import base64
+from decimal import Decimal
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
@@ -12,11 +13,9 @@ from .models import Reservation
 from rooms.models import Room
 from .serializers import ReservationCreateSerializer, ReservationDetailSerializer
 from users.permissions import IsAdmin, IsEmployee
-from decimal import Decimal
 
 def generate_qr_code(reservation_id):
-    
-    # Genera QR code y retorna base64 para almacenar/retornar
+    """Genera QR code y retorna base64 para almacenar/retornar"""
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(f"RES-{reservation_id}")
     qr.make(fit=True)
@@ -29,17 +28,12 @@ def generate_qr_code(reservation_id):
     return f"data:image/png;base64,{img_str}"
 
 class ReservationCreateView(generics.CreateAPIView):
-    
-    # POST /api/reservations/
-    # Crea reserva con validación atómica, cálculo de 30% y generación de QR
-    
+    """POST /api/reservations/create/"""
     serializer_class = ReservationCreateSerializer
     permission_classes = [IsAuthenticated]
     
     @transaction.atomic
     def perform_create(self, serializer):
-        # Datos validados
-        advance = total * Decimal('0.30')
         room_id = serializer.validated_data['room_id']
         check_in = serializer.validated_data['check_in']
         check_out = serializer.validated_data['check_out']
@@ -48,13 +42,13 @@ class ReservationCreateView(generics.CreateAPIView):
         
         # Calcular totales
         days = (check_out - check_in).days
-        total = days * room.price_daily
-        advance = total * 0.30  # 30% según restricción de negocio
+        total = Decimal(str(days)) * room.price_daily
+        advance = total * Decimal('0.30')
         
         # Generar código QR único
         qr_data = f"RES-{uuid.uuid4().hex[:12].upper()}"
         
-        # Crear reserva (status confirmed simulado pago exitoso)
+        # Crear reserva
         reservation = Reservation.objects.create(
             user=self.request.user,
             room=room,
@@ -63,7 +57,7 @@ class ReservationCreateView(generics.CreateAPIView):
             total_days=days,
             total_amount=total,
             advance_paid=advance,
-            payment_status='paid',  # paid simulado
+            payment_status='paid',
             qr_code=qr_data,
             status='confirmed'
         )
@@ -87,8 +81,7 @@ class ReservationCreateView(generics.CreateAPIView):
         }, status=status.HTTP_201_CREATED)
 
 class ReservationListView(generics.ListAPIView):
-    
-    # GET /api/reservations/ - Listar reservas del usuario o todas si es admin
+    """GET /api/reservations/"""
     serializer_class = ReservationDetailSerializer
     permission_classes = [IsAuthenticated]
     
@@ -98,12 +91,11 @@ class ReservationListView(generics.ListAPIView):
             return Reservation.objects.all().order_by('-created_at')
         elif user.role == 'employee':
             return Reservation.objects.filter(status='confirmed').order_by('-check_in')
-        else:  # client
+        else:
             return Reservation.objects.filter(user=user).order_by('-created_at')
 
 class ReservationDetailView(generics.RetrieveAPIView):
-    
-    # GET /api/reservations/{id}/ - Detalle de una reserva
+    """GET /api/reservations/{id}/"""
     serializer_class = ReservationDetailSerializer
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
@@ -115,8 +107,7 @@ class ReservationDetailView(generics.RetrieveAPIView):
         return Reservation.objects.filter(user=user)
 
 class ReservationCancelView(generics.UpdateAPIView):
-    
-    # PUT /api/reservations/{id}/cancel/ - Cancelar reserva (admin o propietario)
+    """PATCH /api/reservations/{id}/cancel/"""
     permission_classes = [IsAuthenticated]
     lookup_field = 'id'
     
@@ -133,12 +124,9 @@ class ReservationCancelView(generics.UpdateAPIView):
         return Response({"message": "Reserva cancelada exitosamente"})
 
 @api_view(['POST'])
-@permission_classes([IsEmployee, IsAdmin])
+@permission_classes([IsEmployee | IsAdmin])
 def validate_qr(request):
-
-    # POST /api/reservations/validate-qr/
-    # Para empleados: validar QR en check-in
-    # Body: {"qr_code": "RES-ABC123..."}
+    """POST /api/reservations/validate-qr/"""
     qr_code = request.data.get('qr_code')
     if not qr_code:
         return Response({"error": "qr_code requerido"}, status=400)
