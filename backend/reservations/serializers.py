@@ -1,11 +1,10 @@
 from rest_framework import serializers
+from datetime import date
 from .models import Reservation
 from rooms.models import Room
 from rooms.serializers import RoomListSerializer
 
 class ReservationCreateSerializer(serializers.ModelSerializer):
-  
-    # Para crear reservas (input)
     room_id = serializers.IntegerField(write_only=True)
     check_in = serializers.DateField()
     check_out = serializers.DateField()
@@ -15,12 +14,19 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         fields = ['room_id', 'check_in', 'check_out']
     
     def validate(self, data):
+        # Validar que no sean fechas pasadas
+        if data['check_in'] < date.today():
+            raise serializers.ValidationError({
+                "check_in": "No se pueden reservar fechas pasadas"
+            })
         
         # Validar que check_out > check_in
         if data['check_out'] <= data['check_in']:
-            raise serializers.ValidationError("La fecha de salida debe ser posterior a la entrada")
+            raise serializers.ValidationError({
+                "check_out": "La fecha de salida debe ser posterior a la entrada"
+            })
         
-        # Validar disponibilidad (doble verificación)
+        # Validar disponibilidad
         room = Room.objects.get(id=data['room_id'])
         conflicting = Reservation.objects.filter(
             room=room,
@@ -30,7 +36,9 @@ class ReservationCreateSerializer(serializers.ModelSerializer):
         ).exists()
         
         if conflicting:
-            raise serializers.ValidationError("La habitación no está disponible para esas fechas")
+            raise serializers.ValidationError({
+                "room_id": "La habitación no está disponible para esas fechas"
+            })
         
         return data
 
