@@ -22,9 +22,22 @@ describe('RoomCard', () => {
       </BrowserRouter>
     )
     
+    // Título
     expect(screen.getByText('Habitación Turista 201')).toBeInTheDocument()
-    expect(screen.getByText('2 personas')).toBeInTheDocument()
-    expect(screen.getByText('Ver detalles')).toBeInTheDocument()
+    
+    // Descripción
+    expect(screen.getByText('Habitación cómoda con vista al jardín')).toBeInTheDocument()
+    
+    // Capacidad - usar función matcher flexible
+    expect(screen.getByText((content, element) => {
+      return content.includes('2') && content.includes('pers')
+    })).toBeInTheDocument()
+    
+    // Precio - regex flexible
+    expect(screen.getByText(/\$80/)).toBeInTheDocument()
+    
+    // Botón
+    expect(screen.getByRole('link', { name: /ver detalle/i })).toBeInTheDocument()
   })
 
   it('muestra badge de categoría correcta', () => {
