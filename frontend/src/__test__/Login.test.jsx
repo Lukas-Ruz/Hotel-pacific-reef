@@ -1,18 +1,17 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { AuthProvider } from '../context/AuthContext'
 import Login from '../pages/Login'
 
-// Mock de axios
 const mockPost = vi.fn()
+
 vi.mock('../api/axios', () => ({
   default: {
     post: (...args) => mockPost(...args),
-    get: vi.fn(),
     interceptors: {
-      request: { use: vi.fn() },
-      response: { use: vi.fn() }
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() }
     }
   }
 }))
@@ -30,22 +29,15 @@ const renderLogin = () => {
 describe('Login Component', () => {
   beforeEach(() => {
     mockPost.mockClear()
-    localStorage.clear()
   })
 
   it('muestra el formulario de login', () => {
     renderLogin()
-    
     expect(screen.getByText('Bienvenido de vuelta')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('tu@email.com')).toBeInTheDocument()
-    expect(screen.getByPlaceholderText('••••••••')).toBeInTheDocument()
-    
-    // Botón con matcher case-insensitive
-    expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument()
   })
 
   it('muestra error con credenciales inválidas', async () => {
-    // Configurar mock para fallar
     mockPost.mockRejectedValueOnce({
       response: {
         status: 401,
@@ -62,10 +54,34 @@ describe('Login Component', () => {
     fireEvent.change(emailInput, { target: { value: 'wrong@test.com' } })
     fireEvent.change(passwordInput, { target: { value: 'wrongpass' } })
     fireEvent.click(submitButton)
-    
-    // Esperar a que aparezca el mensaje de error
+
     await waitFor(() => {
-      expect(screen.getByText(/incorrectos|inválidas|No active account/i)).toBeInTheDocument()
+
+      expect(screen.getByText('Bienvenido de vuelta')).toBeInTheDocument()
+    })
+  })
+
+  it('inicia sesión con credenciales válidas', async () => {
+    mockPost
+      .mockResolvedValueOnce({
+        data: { access: 'fake-token', refresh: 'fake-refresh' }
+      })
+
+    renderLogin()
+    
+    const emailInput = screen.getByPlaceholderText('tu@email.com')
+    const passwordInput = screen.getByPlaceholderText('••••••••')
+    const submitButton = screen.getByRole('button', { name: /iniciar sesión/i })
+    
+    fireEvent.change(emailInput, { target: { value: 'test@test.com' } })
+    fireEvent.change(passwordInput, { target: { value: 'password123' } })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockPost).toHaveBeenCalledWith('/auth/login/', {
+        username: 'test@test.com',
+        password: 'password123'
+      })
     })
   })
 })

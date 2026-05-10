@@ -1,7 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import api from '../api/axios';
 
-const AuthContext = createContext(null);
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -28,19 +28,35 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, password) => {
-    const response = await api.post('/auth/login/', {
-      username: email,  // Django "username" para campo email en JWT
-      password
-    });
-    localStorage.setItem('access_token', response.data.access);
-    localStorage.setItem('refresh_token', response.data.refresh);
-    await fetchProfile();
-    return response.data;
+    try {
+      const response = await api.post('/auth/login/', {
+        username: email,
+        password
+      });
+      localStorage.setItem('access_token', response.data.access);
+      localStorage.setItem('refresh_token', response.data.refresh);
+      await fetchProfile();
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.detail || 'Error de autenticación' 
+      };
+    }
   };
 
   const register = async (userData) => {
-    const response = await api.post('/auth/register/', userData);
-    return response.data;
+    try {
+      const response = await api.post('/auth/register/', userData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error('Register error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data || 'Error de registro' 
+      };
+    }
   };
 
   const logout = () => {
